@@ -11,15 +11,23 @@ class PackageSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
+    packages = PackageSerializer(many=True)
+
     class Meta:
         model = Project
         fields = ['name', 'packages']
 
-    packages = PackageSerializer(many=True)
-
     def create(self, validated_data):
-        # TODO
-        # - Processar os pacotes recebidos
-        # - Persistir informações no banco
-        packages = validated_data['packages']
-        return Project(name=validated_data['name'])
+        project_data = validated_data['name']
+        project = Project.objects.create(name=project_data)
+
+        packages_data = validated_data['packages']
+        for package in packages_data:
+            PackageRelease.objects.create(
+                # TODO: verificar se pacote existe no PyPi
+                name=package['name'],
+                # TODO: pegar versão mais atual no PyPi se nenhuma versão foi escolhida
+                version=package.get('version', '?'),
+                project=project
+            )
+        return project
