@@ -37,6 +37,10 @@ jobs:
       run: |
         pipenv install --deploy --dev    
         
+    - name: Activate pipenv
+      run: |
+        pipenv shell  
+        
     - name: Test api
       run: |
         python manage.py test api
