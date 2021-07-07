@@ -43,6 +43,10 @@ class ProjectViewTest(TestCase):
         response = client.get(f'/api/projects/{self.project_name}/')
         self.assertEqual(len(response.data['packages']), 3)
 
+    def test_if_single_project_is_deleted(self):
+        response = client.delete(f'/api/projects/{self.project_name}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
     def test_get_all_projects(self):
         response = client.get('/api/projects/')
         projects = Project.objects.all()
