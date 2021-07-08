@@ -98,7 +98,7 @@ class ProjectViewTest(APITestCase):
             format='json'
         )
         error_msg = response.data['error']
-        self.assertEqual(error_msg, 'One or more packages do not exist.')
+        self.assertEqual(error_msg, "One or more packages doesn't exist")
         self.assertEqual(PYPI_STATUS_CODE, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

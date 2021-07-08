@@ -26,3 +26,8 @@ Inicie a aplicação:
 ```bash
 python3 manage.py runserver
 ```
+
+Para rodar testes do `k6`:
+```bash
+k6 run -e API_BASE='http://localhost:8000/' tests-open.js
+```

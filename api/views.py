@@ -1,5 +1,4 @@
 from rest_framework import status, viewsets
-from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 import requests
 
@@ -72,6 +71,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
             )
         elif PYPI_STATUS_CODE == status.HTTP_404_NOT_FOUND:
             return Response(
-                data={'error': 'One or more packages do not exist.'},
+                data={'error': "One or more packages doesn't exist"},
                 status=status.HTTP_400_BAD_REQUEST
             )
