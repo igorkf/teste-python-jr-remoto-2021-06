@@ -70,7 +70,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_201_CREATED,
                 headers=headers
             )
-        else:
+        elif PYPI_STATUS_CODE == status.HTTP_404_NOT_FOUND:
             return Response(
                 data={'error': 'One or more packages do not exist.'},
                 status=status.HTTP_400_BAD_REQUEST
