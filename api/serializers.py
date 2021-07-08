@@ -24,10 +24,8 @@ class ProjectSerializer(serializers.ModelSerializer):
         packages_data = validated_data['packages']
         for package in packages_data:
             PackageRelease.objects.create(
-                # TODO: verificar se pacote existe no PyPi
                 name=package['name'],
-                # TODO: pegar versão mais atual no PyPi se nenhuma versão foi escolhida
-                version=package.get('version', '?'),
+                version=package.get('version', ''),
                 project=project
             )
         return project
