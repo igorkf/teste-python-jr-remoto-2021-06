@@ -5,6 +5,7 @@ from rest_framework import status
 
 from ..models import Project, PackageRelease
 from ..serializers import ProjectSerializer
+from ..views import check_packages_at_pypi
 
 
 project_data = {
@@ -13,6 +14,14 @@ project_data = {
         {'name': 'django-rest-swagger'},
         {'name': 'Django', 'version': '2.2.24'},
         {'name': 'psycopg2-binary', 'version': '2.9.1'}
+    ]
+}
+
+invalid_project_data = {
+    'name': 'qazwsxedc',
+    'packages': [
+        {'name': 'pypypypypypypypypypypy'},
+        {"name": "graphene", "version": "1900"}
     ]
 }
 
@@ -41,35 +50,58 @@ class ProjectViewTest(APITestCase):
         self.assertEqual(error_msg, 'Not found.')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_create_project_that_does_not_exists(self):
-        # delete projects before creating a new one
-        Project.objects.all().delete()
-
-        response = self.client.post(
-            '/api/projects/',
-            data=project_data,
-            format='json'
-        )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_create_project_that_already_exists(self):
-        response = self.client.post(
-            '/api/projects/',
-            data=project_data,
-            format='json'
-        )
-        error_msg = str(response.data['name'][0])
-        self.assertEqual(error_msg, 'project with this name already exists.')
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_delete_project(self):
-        response = self.client.delete(f'/api/projects/{self.project_name}/')
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
     def test_get_all_projects(self):
         response = self.client.get('/api/projects/')
         projects = Project.objects.all()
         serializer = ProjectSerializer(projects, many=True)
         self.assertEqual(response.data, serializer.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
+    def test_create_project_that_does_not_exists_yet(self):
+        # delete projects before creating a new one
+        Project.objects.all().delete()
+
+        PYPI_STATUS_CODE, checked_project_data = check_packages_at_pypi(
+            project=project_data
+        )
+        response = self.client.post(
+            '/api/projects/',
+            data=checked_project_data,
+            format='json'
+        )
+        self.assertEqual(PYPI_STATUS_CODE, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_project_that_already_exists(self):
+        PYPI_STATUS_CODE, checked_project_data = check_packages_at_pypi(
+            project=project_data
+        )
+
+        response = self.client.post(
+            '/api/projects/',
+            data=checked_project_data,
+            format='json'
+        )
+        error_msg = str(response.data['name'][0])
+        self.assertEqual(error_msg, 'project with this name already exists.')
+        self.assertEqual(PYPI_STATUS_CODE, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_project_that_does_not_exists_at_pypi(self):
+        PYPI_STATUS_CODE, checked_project_data = check_packages_at_pypi(
+            project=invalid_project_data
+        )
+
+        response = self.client.post(
+            '/api/projects/',
+            data=checked_project_data,
+            format='json'
+        )
+        error_msg = response.data['error']
+        self.assertEqual(error_msg, 'One or more packages do not exist.')
+        self.assertEqual(PYPI_STATUS_CODE, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_project(self):
+        response = self.client.delete(f'/api/projects/{self.project_name}/')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
